@@ -13,6 +13,33 @@ exports.getAllUsers = async (req, res, next) => {
 	}
 };
 
+exports.createNewUser = async (req, res, next) => {
+	const { user, auth } = req.body;
+	try {
+		const hasPermission = await checkUserAuth(auth.username, auth.password);
+		if (hasPermission) {
+			const usersPromise = Users.find();
+			const userRolesPromise = UserRoles.find();
+			const userDoc = await usersPromise;
+			const userRoles = await userRolesPromise;
+			if (userDoc.filter(user => user.username === user.username).length > 0) {
+				next({message: "Username already exists"});
+			}
+			const userRoleKey = createUserRolesKey(userRoles);
+			const savedUser = await Users.create({
+				username: user.username,
+				password: passwordHash.generate(user.password),
+				role: userRoleKey[user.role]
+			});
+			savedUser.role = userRoles.filter(userRole => userRole._id === savedUser.role)[0];
+			res.status(201).send({user: savedUser});
+		}
+	} catch (err) {
+		res.send({err});
+	}
+	next({message: "You don't have permission to update users"});
+};
+
 exports.getUser = (req, res, next) => {
 	const { username } = req.params;
 	return Users.findOne({ username })
@@ -24,53 +51,27 @@ exports.getUser = (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
 	const { username } = req.params;
-	const { role, password, adminPassword, adminUsername } = req.body;
+	const { user, auth } = req.body;
+	const { role, password } = user;
 	try {
-		const hasPermission = await checkUserAuth(adminUsername, adminPassword);
+		const hasPermission = await checkUserAuth(auth.username, auth.password);
 		if (hasPermission) {
 			const usersPromise = Users.findOne({ username }).populate("role");
 			const userRolesPromise = UserRoles.find();
 			const userDoc = await usersPromise;
 			const userRoles = await userRolesPromise;
 			if (!userDoc) {
-				res.send({message: "No user found"});
+				res.status(404).send({message: "No user found"});
 			}
 			const userRoleKey = createUserRolesKey(userRoles);
 			if (role) userDoc.role = userRoleKey[role];
 			if (password) userDoc.password = passwordHash.generate(password);
-			const user = await userDoc.save();
-			user.role = userRoles.filter(userRole => userRole._id === user.role)[0];
-			res.status(201).send({user});
+			const savedUser = await userDoc.save();
+			savedUser.role = userRoles.filter(userRole => userRole._id === savedUser.role)[0];
+			res.status(201).send({user: savedUser});
 		}
+		res.status(403).send({message: "You don't have permission to update users"});
 	} catch (err) {
-		res.send({err});
+		next({err});
 	}
-	next({message: "You don't have permission to update users"});
-};
-
-exports.createNewUser = async (req, res, next) => {
-	const { username, role, password, adminPassword, adminUsername } = req.body;
-	try {
-		const hasPermission = await checkUserAuth(adminUsername, adminPassword);
-		if (hasPermission) {
-			const usersPromise = Users.find();
-			const userRolesPromise = UserRoles.find();
-			const userDoc = await usersPromise;
-			const userRoles = await userRolesPromise;
-			if (userDoc.filter(user => user.username === username).length > 0) {
-				next({message: "Username already exists"});
-			}
-			const userRoleKey = createUserRolesKey(userRoles);
-			const user = await Users.create({
-				username,
-				password: passwordHash.generate(password),
-				role: userRoleKey[role]
-			});
-			user.role = userRoles.filter(userRole => userRole._id === user.role)[0];
-			res.status(201).send({user});
-		}
-	} catch (err) {
-		res.send({err});
-	}
-	next({message: "You don't have permission to update users"});
 };

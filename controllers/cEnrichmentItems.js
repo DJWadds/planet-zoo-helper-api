@@ -11,14 +11,14 @@ exports.getAllEnrichmentItems = async (req, res, next) => {
 };
 
 exports.createEnrichmentItem = async (req, res, next) => {
-	const { enrichmentItem, adminPassword, adminUsername } = req.body;
+	const { enrichmentItem,  auth } = req.body;
 	if(!enrichmentItem.name || !enrichmentItem.image) res.send({ message: "Enrichmanet Item imcomplete"});
 	try {
-		const hasPermission = await checkUserAuth(adminUsername, adminPassword);
+		const hasPermission = await checkUserAuth(auth.username, auth.password);
 		if (hasPermission) {
 			const enrichmentItems = await EnrichmentItems.find();
 			if (enrichmentItems.filter(savedenrichmentItems => savedenrichmentItems.name === enrichmentItem.name).length > 0) {
-				res.send({ message: "nrichmanet Item aleready exists"});
+				res.send({ message: "enrichmanet Item aleready exists"});
 			}
 			const savedEnrichmentItem = await EnrichmentItems.create(enrichmentItem);
 			res.status(201).send({ enrichmentItem: savedEnrichmentItem });
@@ -41,20 +41,19 @@ exports.getEnrichmentItem = async (req, res, next) => {
 
 exports.updateEnrichmentItem = async (req, res, next) => {
 	const { enrichment_item_name } = req.params;
-	const { 
-		name,
-		image, 
-		adminPassword, 
-		adminUsername 
+	const {
+		enrichmentItem,
+		auth
 	} = req.body;
+	const {name, image} = enrichmentItem;
 	try {
-		const hasPermission = await checkUserAuth(adminUsername, adminPassword);
+		const hasPermission = await checkUserAuth(auth.username, auth.password);
 		if (hasPermission) {
 			const enrichmentItemDoc = await EnrichmentItems.findOne(({ name: enrichment_item_name }));
 			if (name) enrichmentItemDoc.name = name;
 			if (image) enrichmentItemDoc.image = image;
-			const enrichmentItem = await enrichmentItemDoc.save();
-			res.status(201).send({enrichmentItem});
+			const savedEnrichmentItem = await enrichmentItemDoc.save();
+			res.status(201).send({enrichmentItem: savedEnrichmentItem});
 		}
 	} catch (err) {
 		res.send({err});

@@ -10,18 +10,8 @@ exports.getAllBarriers = async (req, res, next) => {
 	}
 };
 
-exports.getBarrier = async (req, res, next) => {
-	const { barrier_name} = req.params;
-	try {
-		const barrier = await Barriers.findOne(({ name: barrier_name }));
-		res.send({barrier});
-	} catch (err) {
-		next({err});
-	}
-};
-
 exports.createBarrier = async (req, res, next) => {
-	const { barrier, adminPassword, adminUsername } = req.body;
+	const { barrier, auth } = req.body;
 	const {name,
 		dilapidationRate,
 		image,
@@ -36,7 +26,7 @@ exports.createBarrier = async (req, res, next) => {
 		transprancy].filter(param => param === undefined);
 	if(barrierCheck.length !== 0) res.send({ message: "Barrier imcomplete"});
 	try {
-		const hasPermission = await checkUserAuth(adminUsername, adminPassword);
+		const hasPermission = await checkUserAuth(auth.username, auth.password);
 		if (hasPermission) {
 			const barriers = await Barriers.find();
 			if (barriers.filter(savedBarrier => savedBarrier.name === barrier.name).length > 0) {
@@ -48,23 +38,35 @@ exports.createBarrier = async (req, res, next) => {
 	} catch (err) {
 		res.send({err});
 	}
-	next({message: "You don't have permission to update users"});
+	next({message: "You don't have permission to update"});
+};
+
+exports.getBarrier = async (req, res, next) => {
+	const { barrier_name} = req.params;
+	try {
+		const barrier = await Barriers.findOne(({ name: barrier_name }));
+		res.send({barrier});
+	} catch (err) {
+		next({err});
+	}
 };
 
 exports.updateBarrier = async (req, res, next) => {
 	const { barrier_name } = req.params;
 	const { 
+		barrier,
+		auth
+	} = req.body;
+	const {
 		name, 
 		dilapidationRate, 
 		transprancy, 
 		isClimbable, 
 		isWatertight, 
 		image, 
-		adminPassword, 
-		adminUsername 
-	} = req.body;
+	} = barrier;
 	try {
-		const hasPermission = await checkUserAuth(adminUsername, adminPassword);
+		const hasPermission = await checkUserAuth(auth.username, auth.password);
 		if (hasPermission) {
 			const barrierDoc = await Barriers.findOne(({ name: barrier_name }));
 			if (name) barrierDoc.name = name;

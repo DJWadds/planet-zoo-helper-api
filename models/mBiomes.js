@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const UserRoleSchema = new Schema({
+const BiomeSchema = new Schema({
 	name: {
 		type: String,
 		unique: true,
@@ -9,4 +9,4 @@ const UserRoleSchema = new Schema({
 	}
 });
 
-module.exports = mongoose.model("userRoles", UserRoleSchema);
+module.exports = mongoose.model("biomes", BiomeSchema);
