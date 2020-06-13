@@ -1,12 +1,12 @@
-module.exports = (habitatAnimal, statusKeys, continentsKeys, biomesKeys) => {
+module.exports = (habitatAnimal, statusKeys, continentKeys, biomeKeys) => {
 	const status = statusKeys[habitatAnimal.status];
-	const continent = continentsKeys[habitatAnimal.continent];
-	const biomes = habitatAnimal.biomes.map(habitatAnimalBiome => biomesKeys[habitatAnimalBiome]);
+	const continent = continentKeys[habitatAnimal.continent];
+	const biomes = habitatAnimal.biomes.map(biome => biomeKeys[biome]);
+	console.log(habitatAnimal);
 	return { 
-		name: habitatAnimal.name, 
-		status, 
-		continent, 
-		biomes,
-		habitat: habitatAnimal.habitat
+		...habitatAnimal,
+		status,
+		continent,
+		biomes
 	};
 };

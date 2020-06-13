@@ -7,9 +7,12 @@ const EnrichmentItems = require("../models/mEnrichmentItems");
 const Continents = require("../models/mContinents");
 const Biomes = require("../models/mBiomes");
 const Status = require("../models/mStatus");
+const HabitatAnimals = require("../models/mHabitatAnimals");
 
 const formatUser = require("../utils/formatUser");
 const createUserRolesKey = require("../utils/createUserRolesKey");
+const createKey = require("../utils/createKey");
+const formatHabitatAnimal = require("../utils/formatHabitatAnimal");
 
 const status = [
 	{ name: "Unkown", level: 0 },
@@ -20,7 +23,7 @@ const status = [
 	{ name: "Endangered", level: 5 },
 	{ name: "Critically Endangered", level: 6 },
 	{ name: "Extinct in Wild", level: 7 }
-]
+];
 
 function seedDB(usersData, barriers, enrichmentItems, continents, biomes, habitatAnimals) {
 	return mongoose.connection
@@ -46,7 +49,10 @@ function seedDB(usersData, barriers, enrichmentItems, continents, biomes, habita
 			console.log(`inserted ${statusDocs.length} status`);
 			const userRoleKey = createUserRolesKey(userRoleDocs);
 			const formattedUsers = usersData.map(user => formatUser(user, userRoleKey));
-			// const 
+			const statusKeys = createKey(statusDocs);
+			const continentKeys = createKey(continentDocs);
+			const biomeKeys = createKey(biomeDocs);
+			const formattedHabitatAnimals = habitatAnimals.map(habitatAnimal => formatHabitatAnimal(habitatAnimal, statusKeys, continentKeys, biomeKeys));
 			return Promise.all([
 				userRoleDocs,
 				barrierDocs,
@@ -54,12 +60,14 @@ function seedDB(usersData, barriers, enrichmentItems, continents, biomes, habita
 				continentDocs, 
 				biomeDocs,
 				statusDocs,
-				Users.insertMany(formattedUsers)
+				Users.insertMany(formattedUsers),
+				HabitatAnimals.insertMany(formattedHabitatAnimals)
 			]);
 		})
-		.then(([userRoleDocs, barrierDocs, enrichmentItemsDocs, continentDocs, biomeDocs, statusDocs, userDocs]) => {
+		.then(([userRoleDocs, barrierDocs, enrichmentItemsDocs, continentDocs, biomeDocs, statusDocs, userDocs, habitatAnimalDocs]) => {
 			console.log(`inserted ${userDocs.length} users`);
-			return { userDocs, userRoleDocs, barrierDocs, enrichmentItemsDocs, continentDocs, biomeDocs };
+			console.log(`inserted ${habitatAnimalDocs.length} habitat animals`);
+			return { userDocs, userRoleDocs, barrierDocs, enrichmentItemsDocs, continentDocs, statusDocs, biomeDocs, habitatAnimalDocs };
 		});
 }
 

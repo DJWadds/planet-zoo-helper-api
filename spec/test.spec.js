@@ -17,6 +17,8 @@ describe("/api", () => {
 	let firstEnrichmentItemsDoc;
 	let returnedContinentDocs;
 	let firstContinentDoc;
+	let returnedHabitatAnimalDocs;
+	let firsthabitatAnimalDoc;
 	beforeEach(() => {
 		const usersData = [...users];
 		const barriersData = [...barriers];
@@ -26,7 +28,7 @@ describe("/api", () => {
 		const habitatAnimalsData = [...habitatAnimals];
 
 		return seedDB(usersData, barriersData, enrichmentItemsData, continentsData, biomesData, habitatAnimalsData)
-			.then(({userDocs, barrierDocs, enrichmentItemsDocs, continentDocs, biomeDocs }) => {
+			.then(({userDocs, barrierDocs, enrichmentItemsDocs, continentDocs, biomeDocs, habitatAnimalDocs }) => {
 				// USERS
 				returnedUserDocs = userDocs;
 				firstUserDoc = returnedUserDocs[0];
@@ -42,6 +44,9 @@ describe("/api", () => {
 				// BIOMES
 				returnedBiomesDocs = biomeDocs;
 				firstBiomeDoc = returnedBiomesDocs[0];
+				// HABITAT ANIMALS
+				returnedHabitatAnimalDocs = habitatAnimalDocs;
+				firsthabitatAnimalDoc = returnedHabitatAnimalDocs[0];
 			});
 	});
 	after(() => mongoose.disconnect());
@@ -287,4 +292,16 @@ describe("/api", () => {
 				});
 		});
 	}); 
+
+	describe.only("/habitatAnimals", () => {
+		it("1) get /api/habitatAnimals/ returns all the possible habitat animals", () => {
+			return request
+				.get("/api/habitatAnimals")
+				.expect(200)
+				.then(({body: {habitatAnimals}}) => {
+					console.log(habitatAnimals[0].social);
+					expect(habitatAnimals.length).equal(2);
+				});
+		});
+	});
 });
